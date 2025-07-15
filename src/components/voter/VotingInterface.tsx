@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useElection } from '@/contexts/ElectionContext';
 import { useToast } from '@/hooks/use-toast';
 import { Election, Candidate } from '@/types/election';
-import { Check, Vote, Trophy } from 'lucide-react';
+import { Check, Vote, Trophy, Users, Crown, Award } from 'lucide-react';
 
 interface VotingInterfaceProps {
   election: Election;
@@ -40,7 +40,8 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({ election }) => {
     if (success) {
       toast({
         title: "Vote Cast Successfully",
-        description: "Your vote has been recorded!",
+        description: "Your vote has been recorded securely!",
+        className: "bg-gradient-success border-success",
       });
       setShowResults(true);
     } else {
@@ -57,74 +58,112 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({ election }) => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">{election.title}</CardTitle>
-          <CardDescription>{election.description}</CardDescription>
+    <div className="space-y-8 animate-fade-in">
+      {/* Election Header */}
+      <Card className="election-card bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+        <CardHeader className="text-center space-y-4">
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-gradient-primary rounded-full p-4 shadow-glow">
+              <Vote className="w-8 h-8 text-primary-foreground" />
+            </div>
+          </div>
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+            {election.title}
+          </CardTitle>
+          <CardDescription className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            {election.description}
+          </CardDescription>
           {totalVotes > 0 && (
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 px-4 py-2">
+              <Users className="w-4 h-4 mr-2" />
               Total Votes: {totalVotes}
             </Badge>
           )}
         </CardHeader>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Candidates Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {election.candidates.map((candidate: Candidate) => {
           const percentage = getVotePercentage(candidate.votes);
           const isWinner = candidate.id === winningCandidate.id && totalVotes > 0;
+          const isSelected = selectedCandidate === candidate.id;
           
           return (
             <Card 
               key={candidate.id} 
-              className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                selectedCandidate === candidate.id ? 'ring-2 ring-primary' : ''
-              } ${isWinner && showResults ? 'border-2' : ''}`}
-              style={isWinner && showResults ? { borderColor: '#FF0000' } : {}}
+              className={`cursor-pointer transition-all duration-300 hover:shadow-hover transform hover:-translate-y-1 ${
+                isSelected && !hasVoted && !showResults ? 'ring-2 ring-primary shadow-glow' : ''
+              } ${isWinner && showResults ? 'border-2 border-red-500 shadow-glow' : ''} ${
+                !hasVoted && !showResults ? 'hover:scale-105' : ''
+              } election-card`}
               onClick={() => !hasVoted && !showResults && setSelectedCandidate(candidate.id)}
             >
-              <CardHeader className="text-center">
+              <CardHeader className="text-center space-y-4">
                 <div className="relative">
-                  <img 
-                    src={candidate.image} 
-                    alt={candidate.name}
-                    className="w-24 h-24 mx-auto rounded-full object-cover"
-                  />
-                  {selectedCandidate === candidate.id && !hasVoted && (
-                    <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1">
-                      <Check className="w-4 h-4" />
+                  <div className={`relative w-28 h-28 mx-auto rounded-full overflow-hidden ${
+                    isSelected ? 'ring-4 ring-primary ring-offset-4' : ''
+                  } ${isWinner && showResults ? 'ring-4 ring-red-500 ring-offset-4' : ''}`}>
+                    <img 
+                      src={candidate.image} 
+                      alt={candidate.name}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                    />
+                  </div>
+                  
+                  {isSelected && !hasVoted && !showResults && (
+                    <div className="absolute -top-2 -right-2 bg-gradient-success rounded-full p-2 shadow-elegant animate-scale-in">
+                      <Check className="w-5 h-5 text-success-foreground" />
                     </div>
                   )}
+                  
                   {isWinner && showResults && (
-                    <div className="absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full p-1">
-                      <Trophy className="w-4 h-4" />
+                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-red-600 rounded-full p-2 shadow-elegant animate-glow">
+                      <Crown className="w-5 h-5 text-white" />
                     </div>
                   )}
                 </div>
-                <CardTitle className="text-lg">{candidate.name}</CardTitle>
-                <CardDescription>{candidate.party}</CardDescription>
+                
+                <div className="space-y-2">
+                  <CardTitle className={`text-xl font-semibold ${
+                    isWinner && showResults ? 'text-red-600' : ''
+                  }`}>
+                    {candidate.name}
+                  </CardTitle>
+                  <CardDescription className="text-base font-medium">
+                    {candidate.party}
+                  </CardDescription>
+                </div>
               </CardHeader>
               
               {(showResults || hasVoted) && (
-                <CardContent className="text-center space-y-2">
-                  <div className="text-2xl font-bold" style={isWinner ? { color: '#FF0000' } : {}}>
-                    {candidate.votes} votes
+                <CardContent className="space-y-4 animate-slide-up">
+                  <div className="text-center space-y-2">
+                    <div className={`text-3xl font-bold ${
+                      isWinner ? 'text-red-600' : 'text-primary'
+                    }`}>
+                      {candidate.votes}
+                    </div>
+                    <div className="text-sm text-muted-foreground font-medium">
+                      {percentage.toFixed(1)}% of total votes
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {percentage.toFixed(1)}% of total votes
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  
+                  <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
                     <div 
-                      className="h-2 rounded-full transition-all duration-500"
+                      className="h-full rounded-full transition-all duration-1000 ease-out"
                       style={{ 
                         width: `${percentage}%`,
-                        backgroundColor: isWinner ? '#FF0000' : '#3b82f6'
+                        background: isWinner 
+                          ? 'linear-gradient(135deg, #ef4444, #dc2626)' 
+                          : 'var(--gradient-primary)'
                       }}
                     />
                   </div>
+                  
                   {isWinner && totalVotes > 0 && (
-                    <Badge style={{ backgroundColor: '#FF0000', color: 'white' }}>
+                    <Badge className="w-full justify-center bg-gradient-to-r from-red-500 to-red-600 text-white border-none shadow-elegant">
+                      <Award className="w-4 h-4 mr-2" />
                       Winner
                     </Badge>
                   )}
@@ -135,69 +174,100 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({ election }) => {
         })}
       </div>
 
+      {/* Voting Button */}
       {!hasVoted && !showResults && (
-        <div className="text-center">
+        <div className="text-center animate-slide-up">
           <Button 
             onClick={handleVote} 
             disabled={!selectedCandidate}
-            className="px-8 py-2 text-lg"
+            className="btn-primary px-12 py-4 text-lg font-semibold rounded-lg shadow-elegant hover:shadow-hover transition-all duration-300 transform hover:-translate-y-1"
           >
-            <Vote className="w-5 h-5 mr-2" />
-            Cast Vote
+            <Vote className="w-6 h-6 mr-3" />
+            Cast Your Vote
           </Button>
+          {!selectedCandidate && (
+            <p className="text-sm text-muted-foreground mt-3">
+              Please select a candidate to cast your vote
+            </p>
+          )}
         </div>
       )}
 
+      {/* View Results Button */}
       {hasVoted && !showResults && (
-        <div className="text-center">
+        <div className="text-center animate-slide-up">
           <Button 
             onClick={() => setShowResults(true)}
-            variant="outline"
-            className="px-8 py-2"
+            className="btn-secondary px-8 py-3 text-lg font-medium rounded-lg shadow-elegant hover:shadow-hover transition-all duration-300"
           >
+            <Trophy className="w-5 h-5 mr-2" />
             View Results
           </Button>
         </div>
       )}
 
+      {/* Results Summary */}
       {(showResults || hasVoted) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center">Election Results</CardTitle>
+        <Card className="election-card animate-fade-in">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold flex items-center justify-center gap-3">
+              <Trophy className="w-6 h-6 text-accent" />
+              Election Results
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {election.candidates
                 .sort((a, b) => b.votes - a.votes)
-                .map((candidate, index) => (
-                  <div 
-                    key={candidate.id}
-                    className="flex items-center justify-between p-3 rounded-lg border"
-                    style={index === 0 && totalVotes > 0 ? { 
-                      borderColor: '#FF0000',
-                      backgroundColor: '#fef2f2'
-                    } : {}}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <span className="text-2xl font-bold">#{index + 1}</span>
-                      <div>
-                        <div className="font-semibold">{candidate.name}</div>
-                        <div className="text-sm text-muted-foreground">{candidate.party}</div>
+                .map((candidate, index) => {
+                  const percentage = getVotePercentage(candidate.votes);
+                  const isWinner = index === 0 && totalVotes > 0;
+                  
+                  return (
+                    <div 
+                      key={candidate.id}
+                      className={`flex items-center justify-between p-4 rounded-lg transition-all duration-300 ${
+                        isWinner 
+                          ? 'bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-200 shadow-elegant' 
+                          : 'bg-secondary/50 border border-border'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full text-lg font-bold ${
+                          isWinner 
+                            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-elegant' 
+                            : 'bg-primary text-primary-foreground'
+                        }`}>
+                          {index === 0 && totalVotes > 0 ? (
+                            <Crown className="w-5 h-5" />
+                          ) : (
+                            `#${index + 1}`
+                          )}
+                        </div>
+                        <div>
+                          <div className={`font-semibold text-lg ${
+                            isWinner ? 'text-red-600' : 'text-foreground'
+                          }`}>
+                            {candidate.name}
+                          </div>
+                          <div className="text-sm text-muted-foreground font-medium">
+                            {candidate.party}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right space-y-1">
+                        <div className={`text-2xl font-bold ${
+                          isWinner ? 'text-red-600' : 'text-primary'
+                        }`}>
+                          {candidate.votes}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {percentage.toFixed(1)}%
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div 
-                        className="text-xl font-bold"
-                        style={index === 0 && totalVotes > 0 ? { color: '#FF0000' } : {}}
-                      >
-                        {candidate.votes} votes
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {getVotePercentage(candidate.votes).toFixed(1)}%
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </CardContent>
         </Card>
