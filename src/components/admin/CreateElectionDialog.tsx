@@ -57,7 +57,11 @@ const CreateElectionDialog: React.FC<CreateElectionDialogProps> = ({ open, onClo
     
     createElection({
       ...formData,
-      candidates: validCandidates.map(c => ({ ...c, votes: 0 }))
+      candidates: validCandidates.map(c => ({ 
+        ...c, 
+        id: crypto.randomUUID(),
+        votes: 0 
+      }))
     });
     
     toast({
